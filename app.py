@@ -4,7 +4,13 @@ import matplotlib.pyplot as plt
 from auth import authenticate
 from llm_sql import english_to_sql
 from db import fetch_data
-from voice_input import listen_from_mic
+
+# Voice support (optional – not available on Streamlit Cloud)
+try:
+    from voice_input import listen_from_mic
+    VOICE_ENABLED = True
+except Exception:
+    VOICE_ENABLED = False
 
 # --------------------------------------------------
 # PAGE CONFIG
@@ -72,12 +78,32 @@ else:
         )
 
     # Voice input
-    with col2:
+    st.subheader("🔎 Ask your question")
+
+col1, col2 = st.columns([4, 1])
+
+with col1:
+    typed_query = st.text_input(
+        "Type your question:",
+        value=st.session_state.query
+    )
+
+with col2:
+    if VOICE_ENABLED:
         if st.button("🎤 Speak"):
             with st.spinner("Listening..."):
                 spoken_query = listen_from_mic()
                 st.session_state.query = spoken_query
                 st.success(f"You said: {spoken_query}")
+    else:
+        st.caption("🎤 Voice input available only in local app")
+
+# Single source of truth
+if typed_query:
+    st.session_state.query = typed_query
+
+query = st.session_state.query
+
 
     # Decide final query (single source of truth)
     if typed_query:
